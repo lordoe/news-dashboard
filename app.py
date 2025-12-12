@@ -5,6 +5,8 @@ import feedparser
 import google.generativeai as genai
 import markdown
 from flask import Flask, render_template, request, jsonify
+from email.utils import parsedate_to_datetime
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -162,7 +164,32 @@ def api_get_topic_data():
 @app.route('/archive')
 def archive_page():
     archive = load_archive()
-    return render_template('archive.html', archive=archive)
+    
+    # Helper to parse RSS date safely
+    def parse_date(item):
+        try:
+            return parsedate_to_datetime(item.get('published', ''))
+        except:
+            return datetime.min
+
+    # Sort by Date (Newest first) - Primary for within topic
+    archive.sort(key=parse_date, reverse=True)
+    
+    # Sort by Topic (A-Z) - Primary overall (stable sort preserves date order)
+    archive.sort(key=lambda x: x.get('topic', 'Z_Uncategorized').lower())
+    
+    # Generate deterministic colors for topics
+    colors = ['bg-primary', 'bg-success', 'bg-danger', 'bg-warning text-dark', 'bg-info text-dark', 'bg-secondary']
+    topic_colors = {}
+    
+    for item in archive:
+        topic = item.get('topic', 'Unbekannt')
+        if topic not in topic_colors:
+            # Simple deterministic hash: sum of char codes modulo color count
+            idx = sum(ord(c) for c in topic) % len(colors)
+            topic_colors[topic] = colors[idx]
+            
+    return render_template('archive.html', archive=archive, topic_colors=topic_colors)
 
 @app.route('/api/archive/add', methods=['POST'])
 def api_archive_add():

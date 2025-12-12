@@ -276,7 +276,8 @@
 
                 // Save logic
                 const btn = li.querySelector('.save-btn');
-                btn.addEventListener('click', () => toggleSave(article, btn));
+                const topicName = shell.dataset.topicName;
+                btn.addEventListener('click', () => toggleSave(article, btn, topicName));
 
                 list.appendChild(li);
             });
@@ -399,13 +400,16 @@
                 });
         }
 
-        function toggleSave(article, btn) {
+        function toggleSave(article, btn, topicName) {
             if (btn.textContent.includes('Gespeichert')) return; // Already saved (simple implementation)
+
+            // Add topic to article object used for saving
+            const articleToSave = { ...article, topic: topicName };
 
             fetch('/api/archive/add', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(article)
+                body: JSON.stringify(articleToSave)
             })
                 .then(res => res.json())
                 .then(res => {
