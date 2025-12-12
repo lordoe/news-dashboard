@@ -96,7 +96,8 @@ def get_news_from_rss(query, count=5):
     # ... (remains same) ...
     """Holt die neusten Schlagzeilen via Google News RSS (zuverlässig & schnell)."""
     # URL encoded query für Google News Deutschland
-    encoded_query = query.replace(" ", "%20")
+    # Add 'when:7d' to force recency (last 7 days)
+    encoded_query = query.replace(" ", "%20") + "+when:7d"
     rss_url = f"https://news.google.com/rss/search?q={encoded_query}&hl=de&gl=DE&ceid=DE:de"
     
     feed = feedparser.parse(rss_url)
