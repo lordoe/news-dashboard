@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="de" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archiv - News Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+
+        .card {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            margin-bottom: 20px;
+        }
+
+        .news-link {
+            text-decoration: none;
+            color: #66b0ff;
+        }
+
+        .news-link:hover {
+            text-decoration: underline;
+            color: #99caff;
+        }
+
+        .source-tag {
+            font-size: 0.8em;
+            color: #888;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">📡 News Dashboard</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/archive">📂 Archiv</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2 class="mb-4">💾 Gespeicherte Artikel</h2>
+
+        {% if not archive %}
+        <div class="alert alert-secondary text-center">Noch keine Artikel gespeichert.</div>
+        {% else %}
+        <div class="card">
+            <ul class="list-group list-group-flush" id="archiveList">
+                {% for article in archive %}
+                <li
+                    class="list-group-item bg-transparent border-secondary d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="{{ article.link }}" target="_blank" class="news-link fw-bold">{{ article.title }}</a>
+                        <br>
+                        <span class="source-tag">{{ article.source }} &bull; {{ article.published[5:16] }}</span>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger delete-btn" data-link="{{ article.link }}">🗑️</button>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <footer class="text-center mt-4 mb-4 text-muted">
+            <small>Powered by Raspberry Pi, Flask & Google Gemini</small>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const link = btn.dataset.link;
+                    if (!confirm('Artikel wirklich aus dem Archiv entfernen?')) return;
+
+                    fetch('/api/archive/remove', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ link: link })
+                    })
+                        .then(res => res.json())
+                        .then(res => {
+                            if (res.status === 'success') {
+                                btn.closest('li').remove();
+                                if (document.querySelectorAll('#archiveList li').length === 0) {
+                                    location.reload();
+                                }
+                            }
+                        });
+                });
+            });
+        });
+    </script>
+
+</body>
+
+</html>

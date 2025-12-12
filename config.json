@@ -1,0 +1,25 @@
+{
+    "topics": [
+        {
+            "name": "Künstliche Intelligenz",
+            "query": "Künstliche Intelligenz",
+            "count": 6,
+            "ai": true,
+            "key": "künstliche_intelligenz"
+        },
+        {
+            "name": "Weltgeschehen",
+            "query": "Weltpolitik",
+            "count": 6,
+            "ai": true,
+            "key": "weltgeschehen"
+        },
+        {
+            "name": "Raspberry Pi & Maker",
+            "query": "Raspberry Pi",
+            "count": 3,
+            "ai": false,
+            "key": "raspberry_pi_&_maker"
+        }
+    ]
+}

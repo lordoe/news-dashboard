@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="de" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raspi News Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+
+        .card {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            margin-bottom: 20px;
+        }
+
+        .news-link {
+            text-decoration: none;
+            color: #66b0ff;
+        }
+
+        .news-link:hover {
+            text-decoration: underline;
+            color: #99caff;
+        }
+
+        .gemini-box {
+            background-color: #2c2545;
+            /* Gemini-artiges Violett/Dunkel */
+            border-left: 4px solid #8e44ad;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .source-tag {
+            font-size: 0.8em;
+            color: #888;
+        }
+
+        h1 {
+            margin-top: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">📡 News Dashboard</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/archive">📂 Archiv</a>
+                    </li>
+                </ul>
+                <button class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                    ⚙️ Themen
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <div class="row" id="topicsContainer">
+            {% for topic in config.topics %}
+            <div class="col-md-6 mb-4 topic-card-shell" data-topic-name="{{ topic.name }}"
+                data-topic-query="{{ topic.query }}" data-topic-count="{{ topic.count }}"
+                data-topic-ai="{{ topic.get('ai', True) | lower }}">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header fw-bold text-uppercase d-flex justify-content-between align-items-center">
+                        {{ topic.name }}
+                        <div class="header-controls d-flex align-items-center gap-2">
+                            <div class="spinner-border spinner-border-sm text-light" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center py-4 loading-placeholder">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Lade Nachrichten & Analyse...</p>
+                        </div>
+                        <div class="content-area d-none">
+                            <!-- AI Analysis -->
+                            <div class="gemini-box d-none">
+                                <strong>✨ KI-Analyse:</strong>
+                                <div class="mt-1 summary-content"></div>
+                            </div>
+                            <!-- Article List -->
+                            <ul class="list-group list-group-flush article-list">
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <footer class="text-center mt-4 mb-4 text-muted">
+            <small>Powered by Raspberry Pi, Flask & Google Gemini</small>
+        </footer>
+    </div>
+
+    <!-- Settings Modal (Kept as is, just ensuring it's still here) -->
+    <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content bg-dark text-light border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">⚙️ Einstellungen</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>Themen verwalten</h6>
+                    <div id="topicsList">
+                        {% for topic in config.topics %}
+                        <div class="topic-item card bg-secondary mb-2 p-2">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-md-3">
+                                    <input type="text" class="form-control form-control-sm topic-name"
+                                        value="{{ topic.name }}" placeholder="Name">
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="text" class="form-control form-control-sm topic-query"
+                                        value="{{ topic.query }}" placeholder="Suchbegriff">
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="number" class="form-control form-control-sm topic-count"
+                                        value="{{ topic.count }}" placeholder="Anzahl" min="1" max="10">
+                                </div>
+                                <div class="col-md-2 text-center">
+                                    <div class="form-check form-switch d-inline-block">
+                                        <input class="form-check-input topic-ai" type="checkbox" {% if topic.get('ai',
+                                            True) %}checked{% endif %}>
+                                        <label class="form-check-label small">KI</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 text-end">
+                                    <button class="btn btn-sm btn-danger remove-topic">Löschen</button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button class="btn btn-sm btn-success mt-2" id="addTopicBtn">+ Neues Thema</button>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                    <button type="button" class="btn btn-primary" id="saveConfigBtn">Speichern</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script id="saved-links-data" type="application/json">
+        {{ saved_links | tojson }}
+    </script>
+    <script>
+        // Config & State
+        const savedLinks = new Set(JSON.parse(document.getElementById('saved-links-data').textContent));
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadAllTopics();
+            setupSettings();
+        });
+
+        function loadAllTopics() {
+            const topicShells = document.querySelectorAll('.topic-card-shell');
+            topicShells.forEach((shell, index) => {
+                const name = shell.dataset.topicName;
+                const query = shell.dataset.topicQuery;
+                const count = shell.dataset.topicCount;
+                const ai = shell.dataset.topicAi === 'true'; // string to boolean
+
+                // Stagger requests: 0ms, 1000ms, 2000ms...
+                setTimeout(() => {
+                    console.log("Loading topic:", { name, query, count, ai, shell });
+                    fetch('/api/get_topic_data', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, query, count, ai })
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            console.log("Topic loaded:", name, data);
+                            renderTopic(shell, data);
+                        })
+                        .catch(err => {
+                            console.error("Error loading topic", name, err);
+                            shell.querySelector('.loading-placeholder').innerHTML = `<p class="text-danger">Fehler beim Laden.</p>`;
+                        });
+                }, index * 1000); // 1 second delay per topic
+            });
+        }
+
+        function renderTopic(shell, data) {
+            // Hide spinner if it exists
+            const spinner = shell.querySelector('.card-header .spinner-border');
+            if (spinner) spinner.remove();
+
+            shell.querySelector('.loading-placeholder').classList.add('d-none');
+
+            const contentArea = shell.querySelector('.content-area');
+            contentArea.classList.remove('d-none');
+
+            // Summary
+            if (data.summary) {
+                const sumBox = contentArea.querySelector('.gemini-box');
+                sumBox.classList.remove('d-none');
+                sumBox.querySelector('.summary-content').innerHTML = data.summary;
+            }
+
+            // Articles
+            const list = contentArea.querySelector('.article-list');
+            list.innerHTML = ''; // Clear existing articles
+            data.articles.forEach(article => {
+                const isSaved = savedLinks.has(article.link);
+                const btnClass = isSaved ? 'btn-success' : 'btn-outline-secondary';
+                const btnText = isSaved ? '✅ Gespeichert' : '💾 Speichern';
+
+                const li = document.createElement('li');
+                li.className = 'list-group-item bg-transparent border-secondary d-flex justify-content-between align-items-start';
+                li.innerHTML = `
+                <div class="me-2">
+                    <a href="${article.link}" target="_blank" class="news-link fw-bold">${article.title}</a>
+                    <br>
+                    <span class="source-tag">${article.source} &bull; ${article.published.slice(5, 16)}</span>
+                </div>
+                <button class="btn btn-sm ${btnClass} save-btn" style="min-width: 100px;">
+                    ${btnText}
+                </button>
+            `;
+
+                // Save logic
+                const btn = li.querySelector('.save-btn');
+                btn.addEventListener('click', () => toggleSave(article, btn));
+
+                list.appendChild(li);
+            });
+
+            // Update header controls
+            const controls = shell.querySelector('.header-controls');
+            controls.innerHTML = ''; // Clear spinner
+
+            // AI Button
+            if (!data.summary) {
+                const aiBtn = document.createElement('button');
+                aiBtn.className = 'btn btn-sm btn-outline-info ai-summary-btn';
+                aiBtn.innerHTML = '✨ AI Summary';
+                aiBtn.onclick = () => fetchSummary(shell, data);
+                controls.appendChild(aiBtn);
+            }
+
+            // Article Count Badge
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-secondary';
+            badge.textContent = `${data.articles.length} Artikel`;
+            controls.appendChild(badge);
+
+            // Load More Button
+            // Remove existing one if any
+            const existingLoadMore = contentArea.querySelector('.load-more-container');
+            if (existingLoadMore) existingLoadMore.remove();
+
+            const loadMoreContainer = document.createElement('div');
+            loadMoreContainer.className = 'load-more-container text-center mt-3';
+            loadMoreContainer.innerHTML = `
+                <button class="btn btn-sm btn-outline-secondary w-100 load-more-btn">
+                    Mehr laden 👇
+                </button>
+            `;
+            contentArea.appendChild(loadMoreContainer);
+
+            loadMoreContainer.querySelector('.load-more-btn').addEventListener('click', () => {
+                loadMoreArticles(shell, data);
+            });
+        }
+
+        function fetchSummary(shell, oldData) {
+            const btn = shell.querySelector('.ai-summary-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+
+            const name = shell.dataset.topicName;
+            const query = shell.dataset.topicQuery;
+            const count = shell.dataset.topicCount;
+
+            // Request with AI enabled, force refresh, and save config
+            fetch('/api/get_topic_data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, query, count, ai: true, refresh: true, save_ai: true })
+            })
+                .then(res => res.json())
+                .then(newData => {
+                    // Update dataset so "Load More" knows AI is on
+                    shell.dataset.topicAi = 'true';
+
+                    // If we got a summary, display it
+                    if (newData.summary) {
+                        const contentArea = shell.querySelector('.content-area');
+                        const sumBox = contentArea.querySelector('.gemini-box');
+                        sumBox.classList.remove('d-none');
+                        sumBox.querySelector('.summary-content').innerHTML = newData.summary;
+
+                        // Remove button after success
+                        btn.remove();
+                    } else {
+                        btn.innerHTML = '⚠️ Failed';
+                    }
+                })
+                .catch(err => {
+                    console.error("Error fetching summary", err);
+                    btn.innerHTML = '⚠️ Error';
+                });
+        }
+
+
+
+        function loadMoreArticles(shell, currentData) {
+            const btn = shell.querySelector('.load-more-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Lade...';
+
+            let currentCount = parseInt(shell.dataset.topicCount);
+            // Increment by 5
+            const newCount = currentCount + 5;
+
+            // Update dataset for next time
+            shell.dataset.topicCount = newCount;
+
+            const name = shell.dataset.topicName;
+            const query = shell.dataset.topicQuery;
+            // Respect current AI setting (from shell or config, here we trust the shell or just re-read)
+            // But wait, the ai toggle in settings doesn't update the shell data-topic-ai attribute in real-time unless we reload?
+            // Actually, for "loading more articles", we might NOT want to re-trigger AI summary every time if it's expensive/slow.
+            // But the user might want the summary to reflect new articles. 
+            // Let's stick to the topic's configured AI setting.
+            const ai = shell.dataset.topicAi === 'true';
+
+            console.log("LoadMore Debug:", { name, query, count: newCount, ai, dataset: shell.dataset });
+
+            fetch('/api/get_topic_data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, query, count: newCount, ai })
+            })
+                .then(res => res.json())
+                .then(newData => {
+                    renderTopic(shell, newData);
+                })
+                .catch(err => {
+                    console.error("Error loading more", err);
+                    btn.innerHTML = '⚠️ Fehler';
+                    btn.disabled = false;
+                });
+        }
+
+        function toggleSave(article, btn) {
+            if (btn.textContent.includes('Gespeichert')) return; // Already saved (simple implementation)
+
+            fetch('/api/archive/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(article)
+            })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status === 'success') {
+                        btn.className = 'btn btn-sm btn-success save-btn';
+                        btn.innerHTML = '✅ Gespeichert';
+                        savedLinks.add(article.link);
+                    }
+                });
+        }
+
+        function setupSettings() {
+            const topicsList = document.getElementById('topicsList');
+            const addTopicBtn = document.getElementById('addTopicBtn');
+            const saveConfigBtn = document.getElementById('saveConfigBtn');
+
+            // Add new topic row
+            addTopicBtn.addEventListener('click', function () {
+                const div = document.createElement('div');
+                div.className = 'topic-item card bg-secondary mb-2 p-2';
+                div.innerHTML = `
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control form-control-sm topic-name" placeholder="Name" value="Neues Thema">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" class="form-control form-control-sm topic-query" placeholder="Suchbegriff" value="News">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="number" class="form-control form-control-sm topic-count" placeholder="Anzahl" value="5" min="1" max="10">
+                    </div>
+                    <div class="col-md-2 text-center">
+                        <div class="form-check form-switch d-inline-block">
+                            <input class="form-check-input topic-ai" type="checkbox" checked>
+                            <label class="form-check-label small">KI</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2 text-end">
+                        <button class="btn btn-sm btn-danger remove-topic">Löschen</button>
+                    </div>
+                </div>
+            `;
+                topicsList.appendChild(div);
+            });
+
+            // Remove topic row (event delegation)
+            topicsList.addEventListener('click', function (e) {
+                if (e.target.classList.contains('remove-topic')) {
+                    e.target.closest('.topic-item').remove();
+                }
+            });
+
+            // Save config
+            saveConfigBtn.addEventListener('click', function () {
+                const topics = [];
+                document.querySelectorAll('#topicsList .topic-item').forEach(item => {
+                    topics.push({
+                        name: item.querySelector('.topic-name').value,
+                        query: item.querySelector('.topic-query').value,
+                        count: parseInt(item.querySelector('.topic-count').value),
+                        ai: item.querySelector('.topic-ai').checked,
+                        key: item.querySelector('.topic-name').value.toLowerCase().replace(/\s+/g, '_')
+                    });
+                });
+
+                fetch('/api/save_config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topics: topics })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            location.reload();
+                        } else {
+                            alert('Fehler beim Speichern');
+                        }
+                    });
+            });
+        }
+    </script>
+
+</body>
+
+</html>
