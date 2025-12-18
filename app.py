@@ -94,13 +94,12 @@ def save_archive(archive):
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-2.5-flash')
 
-def get_news_from_rss(query, count=5):
-    # ... (remains same) ...
+def get_news_from_rss(query, count=5, period="1d", language="de", region="DE"):
     """Holt die neusten Schlagzeilen via Google News RSS (zuverlässig & schnell)."""
-    # URL encoded query für Google News Deutschland
-    # Add 'when:7d' to force recency (last 7 days)
-    encoded_query = query.replace(" ", "%20") + "+when:7d"
-    rss_url = f"https://news.google.com/rss/search?q={encoded_query}&hl=de&gl=DE&ceid=DE:de"
+    # URL encoded query für Google News
+    # Add 'when:...' to force recency
+    encoded_query = query.replace(" ", "%20") + f"+when:{period}"
+    rss_url = f"https://news.google.com/rss/search?q={encoded_query}&hl={language}&gl={region}&ceid={region}:{language}"
     
     feed = feedparser.parse(rss_url)
     news_items = []
@@ -139,9 +138,16 @@ def api_get_topic_data():
     force_refresh = data.get('refresh', False)
     save_ai = data.get('save_ai', False)
 
+    # Load config to get global settings
+    config = load_config()
+    settings = config.get('settings', {'scraping_period': '1d', 'language': 'de', 'region': 'DE'})
+    period = settings.get('scraping_period', '1d')
+    language = settings.get('language', 'de')
+    region = settings.get('region', 'DE')
+
     # Update Config if requested
     if save_ai:
-        config = load_config()
+        # config is already loaded
         for topic in config['topics']:
             if topic['name'] == topic_name:
                 topic['ai'] = True
@@ -149,7 +155,7 @@ def api_get_topic_data():
         save_config(config)
     
     if query:
-        articles = get_news_from_rss(query, count)
+        articles = get_news_from_rss(query, count, period, language, region)
     else:
         articles = []
     summary = ""

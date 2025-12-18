@@ -1,4 +1,9 @@
 {
+    "settings": {
+        "scraping_period": "1d",
+        "language": "de",
+        "region": "US"
+    },
     "topics": [
         {
             "name": "Künstliche Intelligenz",
